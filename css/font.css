@@ -1,0 +1,22 @@
+@font-face {
+    font-family: 'vivoSans';
+    font-display: swap;
+    src: url('/vivoSans-Light.ttf') format("truetype");
+    /* font-weight: 1200; */
+  }
+
+body{
+    font-family: 'vivoSans' !important;
+    
+}
+
+.title{
+    font-family: 'vivoSans' !important;
+    
+}
+
+.categoryButtonText{
+    font-family: 'vivoSans' !important;
+    
+}
+
