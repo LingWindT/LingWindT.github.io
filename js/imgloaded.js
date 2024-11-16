@@ -81,9 +81,9 @@ class ProgressiveLoad {
   
   const config = {
     smallSrc: '/img/top-small.webp', // 小图链接 尽可能配置小于100k的图片
-    largeSrc: 'https://imgbox.2000223.xyz/file/1731747889683_top.webp', // 大图链接 最终显示的图片
+    largeSrc: '/img/top.webp', // 大图链接 最终显示的图片
     mobileSmallSrc: '/img/top-small.webp', // 手机端小图链接 尽可能配置小于100k的图片
-    mobileLargeSrc: 'https://imgbox.2000223.xyz/file/1731747889683_top.webp', // 手机端大图链接 最终显示的图片
+    mobileLargeSrc: '/img/top.webp', // 手机端大图链接 最终显示的图片
     enableRoutes: ['/'],
     };
 
