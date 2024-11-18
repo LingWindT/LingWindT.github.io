@@ -8031,16 +8031,16 @@ body:has(#console.show) #nav-music {
   body #anMusic-page #anMusicSwitching,
   body #anMusic-page #anMusicRefreshBtn,
   body #anMusic-page #anMusicBtnGetSong {
-    right: 7vw;
+    right: 4vw;
   }
   body #anMusic-page #anMusicSwitching {
-    bottom: 100px;
+    bottom: 105px;
   }
   body #anMusic-page #anMusicRefreshBtn {
-    bottom: 160px;
+    bottom: 145px;
   }
   body #anMusic-page #anMusicBtnGetSong {
-    bottom: 220px;
+    bottom: 185px;
   }
 }
 #anMusic-page #anMusicRefreshBtn,
@@ -8053,9 +8053,9 @@ body:has(#console.show) #nav-music {
   display: -ms-flexbox;
   display: box;
   display: flex;
-  width: 50px;
-  height: 50px;
-  bottom: 100px;
+  width: 35px;
+  height: 35px;
+  bottom: 145px;
   padding: 5px;
   background: var(--anzhiyu-white-op);
   backdrop-filter: saturate(180%) blur(20px);
@@ -8079,13 +8079,13 @@ body:has(#console.show) #nav-music {
   z-index: 2;
 }
 #anMusic-page #anMusicBtnGetSong {
-  right: 11vw;
-}
-#anMusic-page #anMusicRefreshBtn {
   right: 7vw;
 }
+#anMusic-page #anMusicRefreshBtn {
+  right: 4vw;
+}
 #anMusic-page #anMusicSwitching {
-  right: 15vw;
+  right: 10vw;
 }
 @media screen and (max-width: 768px) {
   #anMusic-page div#anMusicBtnGetSong {
