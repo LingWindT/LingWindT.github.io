@@ -742,72 +742,44 @@ const anzhiyu = {
   hideLoading: function () {
     document.getElementById("loading-box").classList.add("loaded");
   },
-  // 将音乐缓存播放
-  cacheAndPlayMusic() {
-    let data = localStorage.getItem("musicData");
-    if (data) {
-      data = JSON.parse(data);
-      const currentTime = new Date().getTime();
-      if (currentTime - data.timestamp < 24 * 60 * 60 * 1000) {
-        // 如果缓存的数据没有过期，直接使用
-        anzhiyu.playMusic(data.songs);
-        return;
-      }
-    }
+// 将音乐缓存播放
+cacheAndPlayMusic() {
+  const anMusicPage = document.getElementById("anMusic-page");
+  const metingAplayer = anMusicPage.querySelector("meting-js").aplayer;
 
-    // 否则重新从服务器获取数据
-    fetch("/json/music.json")
-      .then(response => response.json())
-      .then(songs => {
-        const cacheData = {
-          timestamp: new Date().getTime(),
-          songs: songs,
-        };
-        localStorage.setItem("musicData", JSON.stringify(cacheData));
-        anzhiyu.playMusic(songs);
-      });
-  },
-  // 播放音乐
-  playMusic(songs) {
-    const anMusicPage = document.getElementById("anMusic-page");
-    const metingAplayer = anMusicPage.querySelector("meting-js").aplayer;
-    const randomIndex = Math.floor(Math.random() * songs.length);
-    const randomSong = songs[randomIndex];
-    const allAudios = metingAplayer.list.audios;
-    if (!selectRandomSong.includes(randomSong.name)) {
-      // 如果随机到的歌曲已经未被随机到过，就添加进metingAplayer.list
-      metingAplayer.list.add([randomSong]);
-      // 播放最后一首(因为是添加到了最后)
-      metingAplayer.list.switch(allAudios.length);
-      // 添加到已被随机的歌曲列表
-      selectRandomSong.push(randomSong.name);
-    } else {
-      // 随机到的歌曲已经在播放列表中了
-      // 直接继续随机直到随机到没有随机过的歌曲，如果全部随机过了就切换到对应的歌曲播放即可
-      let songFound = false;
-      while (!songFound) {
-        const newRandomIndex = Math.floor(Math.random() * songs.length);
-        const newRandomSong = songs[newRandomIndex];
-        if (!selectRandomSong.includes(newRandomSong.name)) {
-          metingAplayer.list.add([newRandomSong]);
-          metingAplayer.list.switch(allAudios.length);
-          selectRandomSong.push(newRandomSong.name);
-          songFound = true;
-        }
-        // 如果全部歌曲都已被随机过，跳出循环
-        if (selectRandomSong.length === songs.length) {
-          break;
-        }
-      }
-      if (!songFound) {
-        // 如果全部歌曲都已被随机过，切换到对应的歌曲播放
-        const palyMusicIndex = allAudios.findIndex(song => song.name === randomSong.name);
-        if (palyMusicIndex != -1) metingAplayer.list.switch(palyMusicIndex);
-      }
-    }
+  // 如果存在当前播放列表，直接随机播放
+  const allAudios = metingAplayer.list.audios;
+  if (allAudios && allAudios.length > 0) {
+    this.playMusic(allAudios); // 改为直接使用当前播放列表
+    return;
+  }
 
-    console.info("已随机歌曲：", selectRandomSong, "本次随机歌曲：", randomSong.name);
-  },
+  // 如果没有播放列表，加载默认歌单（如 /json/music.json）
+  fetch("/json/music.json")
+    .then(response => response.json())
+    .then(songs => {
+      const cacheData = {
+        timestamp: new Date().getTime(),
+        songs: songs,
+      };
+      localStorage.setItem("musicData", JSON.stringify(cacheData));
+      this.playMusic(songs);
+    });
+},
+
+// 播放音乐
+playMusic(songs) {
+  const anMusicPage = document.getElementById("anMusic-page");
+  const metingAplayer = anMusicPage.querySelector("meting-js").aplayer;
+
+  // 随机选择一首歌
+  const randomIndex = Math.floor(Math.random() * songs.length);
+  const randomSong = songs[randomIndex];
+
+  metingAplayer.list.switch(randomIndex); // 直接播放随机到的歌曲
+  console.info("本次随机歌曲：", randomSong.name);
+},
+
   // 音乐节目切换背景
   changeMusicBg: function (isChangeBg = true) {
     const anMusicBg = document.getElementById("an_music_bg");
@@ -878,7 +850,7 @@ const anzhiyu = {
     const anMusicSwitchingBtn = anMusicPage.querySelector("#anMusicSwitching");
     const metingAplayer = anMusicPage.querySelector("meting-js").aplayer;
     //初始化音量
-    metingAplayer.volume(0.8, true);
+    metingAplayer.volume(0.4, true);
     metingAplayer.on("loadeddata", function () {
       anzhiyu.changeMusicBg();
     });
@@ -961,39 +933,31 @@ const anzhiyu = {
     });
   },
   // 切换歌单
-  changeMusicList: async function () {
-    const anMusicPage = document.getElementById("anMusic-page");
-    const metingAplayer = anMusicPage.querySelector("meting-js").aplayer;
-    const currentTime = new Date().getTime();
-    const cacheData = JSON.parse(localStorage.getItem("musicData")) || { timestamp: 0 };
-    let songs = [];
+  changeMusicList: function () {
+    const playlists = [
+      { id: "9367151983", server: "tencent" },
+      { id: "7579081163", server: "netease" },// 第&个歌单"netease""tencent""kugou"
+      { id: "7852948439", server: "tencent" },
+      { id: "7074872261", server: "netease" },
+    ];
+  
+  // 获取当前索引
+  const currentIndex = parseInt(new URLSearchParams(window.location.search).get("index")) || 0;
 
-    if (changeMusicListFlag) {
-      songs = defaultPlayMusicList;
-    } else {
-      // 保存当前默认播放列表，以使下次可以切换回来
-      defaultPlayMusicList = metingAplayer.list.audios;
-      // 如果缓存的数据没有过期，直接使用
-      if (currentTime - cacheData.timestamp < 24 * 60 * 60 * 1000) {
-        songs = cacheData.songs;
-      } else {
-        // 否则重新从服务器获取数据
-        const response = await fetch("/json/music.json");
-        songs = await response.json();
-        cacheData.timestamp = currentTime;
-        cacheData.songs = songs;
-        localStorage.setItem("musicData", JSON.stringify(cacheData));
-      }
-    }
+  // 下一个索引（循环切换）
+  const nextIndex = (currentIndex + 1) % playlists.length;
 
-    // 清除当前播放列表并添加新的歌曲
-    metingAplayer.list.clear();
-    metingAplayer.list.add(songs);
+  // 获取下一个歌单
+  const nextPlaylist = playlists[nextIndex];
 
-    // 切换标志位
-    changeMusicListFlag = !changeMusicListFlag;
+  // 构建新的 URL，带上索引参数
+  const newUrl = `/music/?id=${nextPlaylist.id}&server=${nextPlaylist.server}&index=${nextIndex}`;
+  console.info("切换到新歌单：", newUrl);
+
+  // 导航到新歌单页面
+  window.location.href = newUrl;
   },
-  // 控制台音乐列表监听
+      // 控制台音乐列表监听
   addEventListenerConsoleMusicList: function () {
     const navMusic = document.getElementById("nav-music");
     if (!navMusic) return;
