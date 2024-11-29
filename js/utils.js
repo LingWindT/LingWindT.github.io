@@ -811,24 +811,69 @@ playMusic(songs) {
       }, 100);
     }
   },
-  // 获取自定义播放列表
-  getCustomPlayList: function () {
-    if (!window.location.pathname.startsWith("/music/")) {
-      return;
-    }
-    const urlParams = new URLSearchParams(window.location.search);
-    const userId = "8152976493";
-    const userServer = "netease";
-    const anMusicPageMeting = document.getElementById("anMusic-page-meting");
-    if (urlParams.get("id") && urlParams.get("server")) {
-      const id = urlParams.get("id");
-      const server = urlParams.get("server");
-      anMusicPageMeting.innerHTML = `<meting-js id="${id}" server=${server} type="playlist" type="playlist" mutex="true" preload="auto" theme="var(--anzhiyu-main)" order="list" list-max-height="calc(100vh - 169px)!important"></meting-js>`;
-    } else {
-      anMusicPageMeting.innerHTML = `<meting-js id="${userId}" server="${userServer}" type="playlist" mutex="true" preload="auto" theme="var(--anzhiyu-main)" order="list" list-max-height="calc(100vh - 169px)!important"></meting-js>`;
-    }
-    anzhiyu.changeMusicBg(false);
-  },
+// 获取自定义播放列表
+getCustomPlayList: async function () {
+  // 仅在 /music/ 页面生效
+  if (!window.location.pathname.startsWith("/music/")) {
+    return;
+  }
+  const urlParams = new URLSearchParams(window.location.search);
+  const userId = "9367151983";
+  const userServer = "tencent";
+  const anMusicPageMeting = document.getElementById("anMusic-page-meting");
+  // 判断是否有传入 URL 参数（id 和 server）
+  if (urlParams.get("id") && urlParams.get("server")) {
+    const id = urlParams.get("id");
+    const server = urlParams.get("server");
+    console.log("加载在线歌单：", id, server);
+    anMusicPageMeting.innerHTML = `<meting-js id="${id}" server=${server} type="playlist" type="playlist" mutex="true" preload="auto" theme="var(--anzhiyu-main)" order="list" list-max-height="calc(100vh - 169px)!important"></meting-js>`;
+  } else {
+    anMusicPageMeting.innerHTML = `<meting-js id="${userId}" server="${userServer}" type="playlist" mutex="true" preload="auto" theme="var(--anzhiyu-main)" order="list" list-max-height="calc(100vh - 169px)!important"></meting-js>`;
+    let intervalId;
+    intervalId = setInterval(function () {
+        const metingElement = anMusicPageMeting.querySelector("meting-js");
+        const metingAplayer = metingElement? metingElement.aplayer : null;
+        if (metingAplayer) {
+            let retryCount = 0;
+            const maxRetries = 5; // 设置最大重试次数
+            const retryDelay = 1000; // 设置重试延迟时间（单位：毫秒）
+    
+            const tryLoadPlaylist = async () => {
+                try {
+                    const response = await fetch("/json/music.json"); // 获取自定义JSON文件
+                    const songs = await response.json(); // 解析JSON数据
+    
+                    // 清空当前播放列表并添加自定义JSON歌单
+                    metingAplayer.list.clear();
+                    metingAplayer.list.add(songs); // 添加自定义JSON歌单
+                    console.log("自定义歌单加载完成");
+                } catch (error) {
+                    console.error("加载自定义歌单失败：", error);
+    
+                    if (retryCount < maxRetries) {
+                        retryCount++;
+                        console.log(`第${retryCount}次重试...`);
+                        await new Promise(resolve => setTimeout(resolve, retryDelay));
+                        await tryLoadPlaylist();
+                    } else {
+                        console.error("已达到最大重试次数，放弃加载自定义歌单。");
+                    }
+                }
+            };
+    
+            tryLoadPlaylist();
+    
+            console.log('APlayer实例已找到');
+            clearInterval(intervalId);
+        }
+    }, 1000);
+  }
+  // 调试输出
+  console.log("页面内容更新完成，检查播放器是否加载。");
+
+  // 触发背景音乐变换（如果有需要）
+  anzhiyu.changeMusicBg(false);
+},
   //隐藏今日推荐
   hideTodayCard: function () {
     if (document.getElementById("todayCard")) {
@@ -938,7 +983,7 @@ playMusic(songs) {
       { id: "9367151983", server: "tencent" },
       { id: "7579081163", server: "netease" },// 第&个歌单"netease""tencent""kugou"
       { id: "7852948439", server: "tencent" },
-      { id: "7074872261", server: "netease" },
+      { custom: true,id: "home", server: "home" },
     ];
   
   // 获取当前索引
@@ -949,14 +994,21 @@ playMusic(songs) {
 
   // 获取下一个歌单
   const nextPlaylist = playlists[nextIndex];
-
-  // 构建新的 URL，带上索引参数
-  const newUrl = `/music/?id=${nextPlaylist.id}&server=${nextPlaylist.server}&index=${nextIndex}`;
-  console.info("切换到新歌单：", newUrl);
-
-  // 导航到新歌单页面
-  window.location.href = newUrl;
+  if (nextPlaylist.custom) 
+    {
+    const newUrl = `/music/`;
+    console.info("切换到默认歌单：", newUrl);
+    window.location.href = newUrl;
+    }
+    else
+    {
+    // 构建新的 URL，带上索引参数
+    const newUrl = `/music/?id=${nextPlaylist.id}&server=${nextPlaylist.server}&index=${nextIndex}`;
+    console.info("切换到新歌单：", newUrl);
+    window.location.href = newUrl;  // 导航到新歌单页面
+    }
   },
+
       // 控制台音乐列表监听
   addEventListenerConsoleMusicList: function () {
     const navMusic = document.getElementById("nav-music");
